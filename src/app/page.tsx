@@ -18,7 +18,7 @@ import {
   Trash2,
   Save,
 } from "lucide-react";
-import { extractColors } from "@/ai/flows/extract-colors";
+import ColorThief from "colorthief";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ColorPaletteDisplay } from "@/components/color-palette-display";
@@ -65,22 +65,37 @@ export default function Home() {
     }
   };
 
-  const handleExtractColors = async () => {
+  const handleExtractColors = () => {
     if (!imagePreview) return;
 
     setIsLoading(true);
     setError(null);
     setExtractedColors(null);
 
-    try {
-      const result = await extractColors({ photoDataUri: imagePreview });
-      setExtractedColors(result.colors);
-    } catch (e) {
-      console.error(e);
-      setError("Could not extract colors. Please try a different image.");
-    } finally {
+    const img = new window.Image();
+    img.src = imagePreview;
+    img.crossOrigin = "Anonymous";
+
+    img.onload = () => {
+      try {
+        const colorThief = new ColorThief();
+        const palette = colorThief.getPalette(img, 8);
+        const hexPalette = palette.map(
+          (rgb: [number, number, number]) =>
+            `#${rgb.map((c) => c.toString(16).padStart(2, "0")).join("")}`
+        );
+        setExtractedColors(hexPalette);
+      } catch (e) {
+        console.error(e);
+        setError("Could not extract colors. Please try a different image.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    img.onerror = () => {
+      setError("Could not load image to extract colors.");
       setIsLoading(false);
-    }
+    };
   };
 
   const handleSavePalette = () => {
@@ -138,8 +153,7 @@ export default function Home() {
             Color Palette Extractor
           </h1>
           <p className="text-lg text-muted-foreground mt-2 max-w-2xl mx-auto">
-            Instantly discover the color palette of any image, inspired by
-            Android's Monet engine.
+            Instantly discover the color palette of any image.
           </p>
         </header>
 
@@ -250,7 +264,6 @@ export default function Home() {
                             alt="Saved palette image"
                             layout="fill"
                             objectFit="cover"
-                            data-ai-hint="palette"
                           />
                         </div>
                         <div className="p-4">

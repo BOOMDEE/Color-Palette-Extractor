@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: 'Color Palette Extractor',
-  description: 'Extract beautiful color palettes from any image with AI.',
+  description: 'Extract beautiful color palettes from any image.',
 };
 
 export default function RootLayout({
